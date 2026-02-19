@@ -108,6 +108,6 @@ library(rgl)
 ```
 
 ```{r}
-scatter3D(x=japan_data$longitude, y=japan_data$depth, z=japan_data$mag)
+scatter3D(x=japan_data$latitude, y=japan_data$depth, z=japan_data$mag)
 
 ```

@@ -3,8 +3,11 @@ library(sp)
 library(rworldmap)
 library(tidyverse)
 library(sf)
+library(stars)
 library(lubridate)
 library(tmap)
+library(leaflet)
+library(conflicted)
 source("./utils/mapper.R")
 
 
@@ -53,3 +56,17 @@ j_plot <- tm_shape(japan_data) +
   add_map_decorations()
 
 j_plot
+
+# Save the plot
+tmap_save(j_plot, "./images/japan_earthquakes.png", width=15, height=15, units="cm")
+# ================================================================
+# KDE plot
+library(spatstat)
+library(raster)
+
+japan_coords <- st_coordinates(japan_data[,c("geometry")])
+#pts <- as.matrix(japan_coords)
+window <- owin(xrange = range(japan_coords[,1]), yrange = range(japan_coords[,2]))
+p <- ppp(japan_coords[,1], japan_coords[,2], window = window)
+kde_1 <- density(p, sigma=bw.ppl)
+plot(kde_1)
