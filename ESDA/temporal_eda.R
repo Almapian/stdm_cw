@@ -1,34 +1,37 @@
-# Load the required libraries
-#library(maptools)
-library(lattice)
-library(spdep)
-#library(sp)
-library(sf)
-library(sftime)
-#library(rgdal)
-library(tmap)
+# Libraries
+library(zoo)
+library(dplyr)
+library(lubridate)
 library(ggplot2)
-library(gridExtra)
-library(gstat)
-library(OpenStreetMap)
-library(spacetime)
-library(stars)
-library(reshape)
+# Use years from 1975 to 2025 for more consistent data
 
-japan <- st_read("japan_earthquakes_2000_2025.gpkg")
+# Time Series
+jp_d <- st_read("japan_earthquakes_1960_2025.gpkg")
 
-str(japan)
+jp_d$time <- strptime(jp_d$time, format="%Y-%m-%dT%H:%M:%S") %>% as.POSIXct()
+jp_d.zoo <- zoo(jp_d$mag, jp_d$time)
+# calculate moving average with a window of 12 months
+jp_annual <- jp_d %>%
+  group_by(t_year) %>%
+  summarise(mean_mag = mean(mag, na.rm = TRUE),
+            n_events = n())
 
-japan$time <- ymd_hms(japan$time)
-class(japan$time)
-jpLagged <- data.frame(t=japan[2:(length(japan))], t_minus_1=japan[1:(length(japan)-1)])
+jp_d$mag_av <- coredata(jp_annual$mean_mag)[match(jp_d$t_year, jp_annual$t_year)]
 
+sum(is.na(jp_d$time))
+#jp_d <- jp_d[!is.na(jp_d$time), ]
 
-p1 <- ggplot(japan, aes(x=japan$time, y=japan$mag)) + geom_line()
-p2 <- ggplot(ChLagged, aes(x=t, y=t_minus_1)) +
-  geom_point() +
-  labs(y="t-1") +
-  geom_smooth(method="lm")+ # Add a regression line to the plot
-  ggplot2::annotate("text", 8.5, 10, label=paste("r =", round(cor(ChLagged$t, ChLagged$t_minus_1), 3))) # Calculate PMCC
+sum(is.infinite(jp_d$time))
 
-grid.arrange(p1,p2, nrow=1)
+ggplot(jp_d, aes(x = time)) +
+  #geom_line(aes(y = mag, colour = "real")) +
+  geom_line(aes(y = mag), size = 0.3, color = "black") +
+  geom_line(aes(y = mag_av, colour = "moving")) +
+  geom_smooth(aes(y = mag), method = "loess", span = 0.1, color = "blue", linetype = "dashed", se = FALSE) +
+  scale_x_datetime(breaks = date_breaks("1 year"), date_labels = "%Y") +
+  xlab("Time 1960 - 2025") + ylab("Earthquake Magnitude > 4.5") +
+  scale_colour_manual("Lines", values = c("real" = "black", "moving" = "red")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  ggtitle("Magnitude of Earthquakes in Japan (1960-2025)")
+
+ggsave("./images/japan_earthquake_time_series.png", width=50, height=15, units="cm")

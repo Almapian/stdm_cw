@@ -1,5 +1,9 @@
 library(dplyr)
+library(sf)
+library(sp)
+library(rworldmap)
 
+# Set the folder path
 folder_path <- "../../../coursework"
 
 # Get all CSV files in the folder
