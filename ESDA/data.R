@@ -2,6 +2,7 @@ library(dplyr)
 library(sf)
 library(sp)
 library(rworldmap)
+library(lubridate)
 
 # Set the folder path
 folder_path <- "../../../coursework"
@@ -43,5 +44,5 @@ jp_d <- merged_data %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326) %>%
   mutate(t_year = year(as.POSIXct(time)))
 
-st_write(jp_d, dsn = "japan_earthquakes_1960_2025.gpkg", driver = "GPKG", delete_dsn = TRUE)
+st_write(jp_d, dsn = "japan_earthquakes_1980_2025.gpkg", driver = "GPKG", delete_dsn = TRUE)
 
